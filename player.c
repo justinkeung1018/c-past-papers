@@ -7,6 +7,10 @@
 
 #include "player.h"
 
+#define BLANK            '?'
+#define BLANK_ALT        ' '
+#define MAX_WORD_LENGTH  7
+#define MAX_LENGTH_BONUS 50
 
 static int scores[] = {1,3,3,2,1,4,2,4,1,8,5,1,3,1,1,3,10,1,1,1,1,4,4,8,4,10};
 
@@ -19,7 +23,17 @@ static int scores[] = {1,3,3,2,1,4,2,4,1,8,5,1,3,1,1,3,10,1,1,1,1,4,4,8,4,10};
 //	and anything else has score -1.
 //
 int tile_score( char tile ) {
-  (void)scores[7]; return -1;
+  if (tile == BLANK || tile == BLANK_ALT) {
+    return 0;
+  }
+  
+  if (!isalpha(tile)) {
+    return -1;
+  }
+ 
+  tile = tolower(tile);
+  
+  return scores[tile - 'a']; 
 }
 
 
@@ -29,7 +43,45 @@ int tile_score( char tile ) {
 //	and "whole hand bonus".  Return the whole score.
 //
 int compute_score( char *played_tiles, ScoreModifier *sm ) {
-  return -1;
+  int word_length = strlen(played_tiles);
+  int word_multiplier = 1;
+  int word_score = 0;
+
+  for (int i = 0; i < word_length; i++) {
+    int score = tile_score(played_tiles[i]);
+
+    switch (sm[i]) {
+      case NONE:
+        // Do nothing to the score
+        break;
+
+      case DOUBLE_LETTER:
+        score *= 2;
+        break;
+
+      case TRIPLE_LETTER:
+        score *= 3;
+        break;
+
+      case DOUBLE_WORD:
+        word_multiplier = 2;
+        break;
+
+      case TRIPLE_WORD:
+        word_multiplier = 3;
+        break;
+    }
+
+    word_score += score;
+  }
+
+  word_score *= word_multiplier;
+
+  if (word_length == MAX_WORD_LENGTH) {
+    word_score += MAX_LENGTH_BONUS;
+  }
+
+  return word_score;
 }
 
 
@@ -40,6 +92,35 @@ int compute_score( char *played_tiles, ScoreModifier *sm ) {
 //	If it can't be done, return false.
 //
 bool form_word( char *word, char *tiles, char *played_tiles ) {
+  if (!*word) {
+    // The player has played sufficient tiles to form the word
+    *played_tiles = '\0';
+    return true;
+  }
+  
+  char *tile = strchr(tiles, *word);
+
+  if (tile == NULL) {
+    // Character does not exist in tiles so we search for blanks
+    tile = strchr(tiles, BLANK);
+    if (tile == NULL) {
+      return false;
+    }
+  }  
+
+  // The current letter can be represented by a tile,
+  // so we play the tile and remove it from the player's hand
+  char remaining_tiles[strlen(tiles) + 1];
+  strcpy(remaining_tiles, tiles);
+  int tile_index = tile - tiles;
+  remaining_tiles[tile_index] = '\0';
+  strcat(remaining_tiles, tile + 1);
+
+  if (form_word(word + 1, remaining_tiles, played_tiles + 1)) {
+    *played_tiles = *tile; 
+    return true;
+  }
+
   return false;
 }
 
