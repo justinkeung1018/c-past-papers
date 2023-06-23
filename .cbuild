@@ -1,0 +1,2 @@
+CFLAGS = -g -Wall
+BUILD = testeveryline testmatch findallincludes testbst testset testanalyse
