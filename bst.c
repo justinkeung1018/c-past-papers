@@ -11,17 +11,17 @@
 typedef struct bintree *bintree; // pure binary bintree of key, value pairs
 struct bintree
 {
-	char *key;		// the key: a string
-	void *value;		// the value: a generic pointer
-	bintree left, right;	// the left and right subtrees
+  char *key;		// the key: a string
+  void *value;		// the value: a generic pointer
+  bintree left, right;	// the left and right subtrees
 };
 
 
 struct bst
 {
-	bst_printkv_func pf;  // the (k,v) print function
-	bst_freev_func ff;    // the value free function
-	bintree t;	      // the binary bintree of (k,v) pairs itself
+  bst_printkv_func pf;  // the (k,v) print function
+  bst_freev_func ff;    // the value free function
+  bintree t;	      // the binary bintree of (k,v) pairs itself
 };
 
 
@@ -32,8 +32,17 @@ struct bst
 //
 bst make_empty_bst( bst_printkv_func pf, bst_freev_func ff )
 {
-	// TASK 3a: IMPLEMENT THIS.
-	return NULL;
+  bst empty_bst = malloc(sizeof(struct bst));
+  if (empty_bst == NULL) {
+    perror("Memory allocation failed.\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  empty_bst->pf = pf;
+  empty_bst->ff = ff;
+  empty_bst->t = NULL;
+
+  return empty_bst;
 }
 
 
@@ -44,8 +53,25 @@ bst make_empty_bst( bst_printkv_func pf, bst_freev_func ff )
 //
 static bintree makenode( char *key, void *value )
 {
-	// TASK 3b: IMPLEMENT THIS.
-	return NULL;
+  bintree node = malloc(sizeof(struct bintree));
+  if (node == NULL) {
+    perror("Memory allocation failed.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  key = strdup(key);
+  if (key == NULL) {
+    free(node);
+    perror("Memory allocation failed.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  node->key = key;
+  node->value = value;
+  node->left = NULL;
+  node->right = NULL;
+
+  return node;
 }
 
 
@@ -58,7 +84,36 @@ static bintree makenode( char *key, void *value )
 //
 void add_bst( bst b, char *key, void *value )
 {
-	// TASK 3c: IMPLEMENT THIS.
+  bintree parent = NULL;
+  bintree t = b->t;
+  bool is_left_child = false;
+  
+  while (t != NULL) {
+    int cmp = strcmp(key, t->key);
+    if (cmp == 0) {
+      break;
+    }
+    parent = t;
+    is_left_child = cmp < 0;
+    t = is_left_child ? t->left : t->right;
+  }
+
+  if (parent == NULL) {
+    // The bintree is empty
+    b->t = makenode(key, value);
+  } else if (t == NULL) {
+    // The node does not exist in the bintree
+    bintree node = makenode(key, value);
+    if (is_left_child) {
+      parent->left = node;
+    } else {
+      parent->right = node;
+    }
+  } else {
+    // The node exists in the bintree
+    free(t->value);
+    t->value = value;
+  }
 }
 
 
@@ -69,13 +124,13 @@ void add_bst( bst b, char *key, void *value )
 //
 static bintree find( bintree t, char *k )
 {
-	while( t != NULL )
-	{
-		int cmp = strcmp( k, t->key );
-	if( cmp == 0 ) return t;
-		t = ( cmp<0 ) ? t->left : t->right;
-	}
-	return NULL;
+  while( t != NULL )
+  {
+    int cmp = strcmp( k, t->key );
+    if( cmp == 0 ) return t;
+    t = ( cmp<0 ) ? t->left : t->right;
+  }
+  return NULL;
 }
 
 
@@ -84,9 +139,9 @@ static bintree find( bintree t, char *k )
 //
 bool in_bst( bst b, char *key )
 {
-	assert( b != NULL );
-	bintree t = find( b->t, key );
-	return t != NULL;
+  assert( b != NULL );
+  bintree t = find( b->t, key );
+  return t != NULL;
 }
 
 
@@ -95,9 +150,9 @@ bool in_bst( bst b, char *key )
 //
 void * get_bst( bst b, char *key )
 {
-	assert( b != NULL );
-	bintree t = find( b->t, key );
-	return t != NULL ? t->value : NULL;
+  assert( b != NULL );
+  bintree t = find( b->t, key );
+  return t != NULL ? t->value : NULL;
 }
 
 
@@ -108,10 +163,10 @@ void * get_bst( bst b, char *key )
 //
 static void each_bintree( bintree t, bst_kv_func kvf, void *state )
 {
-	assert( t != NULL );
-	if( t->left != NULL ) each_bintree( t->left, kvf, state );
-	(*kvf)( t->key, t->value, state );
-	if( t->right != NULL ) each_bintree( t->right, kvf, state );
+  assert( t != NULL );
+  if( t->left != NULL ) each_bintree( t->left, kvf, state );
+  (*kvf)( t->key, t->value, state );
+  if( t->right != NULL ) each_bintree( t->right, kvf, state );
 }
 
 
@@ -122,8 +177,8 @@ static void each_bintree( bintree t, bst_kv_func kvf, void *state )
 //
 void foreach_bst( bst b, bst_kv_func kvf, void *state )
 {
-	assert( b != NULL );
-	if( b->t != NULL ) each_bintree( b->t, kvf, state );
+  assert( b != NULL );
+  if( b->t != NULL ) each_bintree( b->t, kvf, state );
 }
 
 
@@ -135,13 +190,13 @@ void foreach_bst( bst b, bst_kv_func kvf, void *state )
 //
 static int print_bintree( bintree t, bst_printkv_func pf, FILE *out, int ip )
 {
-	assert( t != NULL );
-	if( t->left != NULL ) ip = print_bintree( t->left, pf, out, ip );
-	if( ip>0 ) fputc( ',', out );
-	(*pf)( out, t->key, t->value );
-	ip++;
-	if( t->right != NULL ) ip = print_bintree( t->right, pf, out, ip );
-	return ip;
+  assert( t != NULL );
+  if( t->left != NULL ) ip = print_bintree( t->left, pf, out, ip );
+  if( ip>0 ) fputc( ',', out );
+  (*pf)( out, t->key, t->value );
+  ip++;
+  if( t->right != NULL ) ip = print_bintree( t->right, pf, out, ip );
+  return ip;
 }
 
 
@@ -152,11 +207,11 @@ static int print_bintree( bintree t, bst_printkv_func pf, FILE *out, int ip )
 //
 void print_bst( bst b, FILE *out )
 {
-	assert( b != NULL );
-	assert( b->t != NULL );
-	fprintf( out, "{ " );
-	(void) print_bintree( b->t, b->pf, out, 0 );
-	fprintf( out, " }" );
+  assert( b != NULL );
+  assert( b->t != NULL );
+  fprintf( out, "{ " );
+  (void) print_bintree( b->t, b->pf, out, 0 );
+  fprintf( out, " }" );
 }
 
 
@@ -165,12 +220,12 @@ void print_bst( bst b, FILE *out )
 //
 static void free_bintree( bintree t, bst_freev_func ff )
 {
-	assert( t != NULL );
-	if( t->left != NULL  ) free_bintree( t->left, ff );
-	if( t->right != NULL ) free_bintree( t->right, ff );
-	if( ff != NULL )       (*ff)( t->value );
-	free( t->key );			// was strdup()ed, remember
-	free( t );
+  assert( t != NULL );
+  if( t->left != NULL  ) free_bintree( t->left, ff );
+  if( t->right != NULL ) free_bintree( t->right, ff );
+  if( ff != NULL )       (*ff)( t->value );
+  free( t->key );			// was strdup()ed, remember
+  free( t );
 }
 
 
@@ -180,8 +235,8 @@ static void free_bintree( bintree t, bst_freev_func ff )
 //
 void free_bst( bst b )
 {
-	assert( b != NULL );
-	assert( b->t != NULL );
-	free_bintree( b->t, b->ff );
-	free( b );
+  assert( b != NULL );
+  assert( b->t != NULL );
+  free_bintree( b->t, b->ff );
+  free( b );
 }

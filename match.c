@@ -25,8 +25,26 @@
 //      (including none) after the last word is matched, and return a pointer
 //      to the first unmatched char beyond that.
 //
+
 char * matchwords( char *target, char **wds )
 {
-	// TASK 2: IMPLEMENT THIS
-	return NULL;
+  char *result = target;
+
+  for (char **word = wds; *word; word++) {
+    while (isspace(*result)) {
+      result++;
+    }
+    for (char *c = *word; *c; c++) {
+      if (*result++ != *c) {
+        return NULL;
+      }
+    }
+  }
+
+  while (isspace(*result)) {
+    result++;
+  }
+
+  return result;
 }
+

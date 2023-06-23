@@ -9,7 +9,6 @@
 
 #include "everyline.h"
 
-
 // int n = foreveryline( filename, eachlinef );
 //	open the given filename, read every line from that a file,
 //	remove the trailing newline (if present) and invoke the given
@@ -18,6 +17,24 @@
 //
 int foreveryline( char *filename, everylinecb eachlinef )
 {
-	// TASK 1: IMPLEMENT THIS
-	return -1;
+  FILE *fp = fopen(filename, "r");
+  if (fp == NULL) {
+    // File failed to open
+    return -1;
+  }
+
+  int num_lines = 0;
+  line buffer;
+  while (fgets(buffer, MAXLINELEN, fp)) {
+    num_lines++;
+    if (buffer[strlen(buffer) - 1] == '\n') {
+      buffer[strlen(buffer) - 1] = '\0';
+    }
+    eachlinef(filename, num_lines, buffer);
+  }
+
+  fclose(fp);
+
+  return num_lines;
 }
+
