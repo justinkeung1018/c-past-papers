@@ -1,0 +1,2 @@
+BUILD = scrabble
+CFLAGS = -g -Wall
